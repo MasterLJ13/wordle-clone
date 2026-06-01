@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wordle — Multi-Length</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-noise"></div>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-letters">
+          <span data-color="correct">W</span><span data-color="present">O</span><span data-color="absent">R</span><span data-color="correct">D</span><span data-color="present">L</span><span data-color="absent">E</span>
+        </span>
+      </div>
+      <div class="mode-tabs" id="modeTabs">
+        <button class="mode-tab" data-len="2">2</button>
+        <button class="mode-tab" data-len="3">3</button>
+        <button class="mode-tab" data-len="4">4</button>
+        <button class="mode-tab active" data-len="5">5</button>
+      </div>
+      <button class="icon-btn" id="helpBtn" title="How to play">?</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <div class="board-wrap">
+      <div id="board" class="board"></div>
+    </div>
+
+    <div id="keyboard" class="keyboard">
+      <div class="kb-row">
+        <button class="key" data-key="q">Q</button>
+        <button class="key" data-key="w">W</button>
+        <button class="key" data-key="e">E</button>
+        <button class="key" data-key="r">R</button>
+        <button class="key" data-key="t">T</button>
+        <button class="key" data-key="y">Y</button>
+        <button class="key" data-key="u">U</button>
+        <button class="key" data-key="i">I</button>
+        <button class="key" data-key="o">O</button>
+        <button class="key" data-key="p">P</button>
+      </div>
+      <div class="kb-row">
+        <button class="key" data-key="a">A</button>
+        <button class="key" data-key="s">S</button>
+        <button class="key" data-key="d">D</button>
+        <button class="key" data-key="f">F</button>
+        <button class="key" data-key="g">G</button>
+        <button class="key" data-key="h">H</button>
+        <button class="key" data-key="j">J</button>
+        <button class="key" data-key="k">K</button>
+        <button class="key" data-key="l">L</button>
+      </div>
+      <div class="kb-row">
+        <button class="key wide" data-key="Enter">↵</button>
+        <button class="key" data-key="z">Z</button>
+        <button class="key" data-key="x">X</button>
+        <button class="key" data-key="c">C</button>
+        <button class="key" data-key="v">V</button>
+        <button class="key" data-key="b">B</button>
+        <button class="key" data-key="n">N</button>
+        <button class="key" data-key="m">M</button>
+        <button class="key wide" data-key="Backspace">⌫</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal">
+      <button class="modal-close" id="closeHelp">✕</button>
+      <h2>How To Play</h2>
+      <p>Guess the word in <strong>6 tries</strong>.</p>
+      <ul>
+        <li>Each guess must be a valid word of the chosen length.</li>
+        <li>Colors show how close your guess was.</li>
+      </ul>
+      <div class="legend">
+        <div class="legend-row">
+          <div class="legend-tile" data-color="correct">A</div>
+          <span>Right letter, right spot</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-tile" data-color="present">A</div>
+          <span>Right letter, wrong spot</span>
+        </div>
+        <div class="legend-row">
+          <div class="legend-tile" data-color="absent">A</div>
+          <span>Letter not in word</span>
+        </div>
+      </div>
+      <p class="modal-note">Each page load gives you a new random word!</p>
+      <button class="play-btn" id="startPlay">Play Now</button>
+    </div>
+  </div>
+
+  <!-- Win/Lose Modal -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal result-modal">
+      <div id="resultEmoji" class="result-emoji"></div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultMessage"></p>
+      <div class="result-word-wrap">
+        <span class="result-label">The word was</span>
+        <span id="resultWord" class="result-word"></span>
+      </div>
+      <button class="play-btn" id="playAgainBtn">Play Again</button>
+    </div>
+  </div>
+
+  <script src="words.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
