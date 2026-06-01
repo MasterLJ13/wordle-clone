@@ -1,23 +1,29 @@
 /* ===== WORD LIST SOURCES =====
  *
- * Answers pool  — cfreshman's original Wordle answer list (2,315 common words)
+ * 5-letter answers pool — cfreshman's original Wordle answer list (2,315 common words)
  *   https://gist.github.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b
  *
- * Valid guesses — tabatkins' full Wordle dictionary (~14,800 words, taken
- *   directly from the NYT game source)
+ * 5-letter valid guesses — tabatkins' full Wordle dictionary (~14,800 words)
  *   https://github.com/tabatkins/wordle-list
  *
- * Both lists are fetched at startup; if either fetch fails the game falls back
- * to the bundled WORDS_5_FALLBACK list defined in words.js.
+ * 2/3/4-letter valid guesses — TWL06 Official Scrabble dictionary (~178k words),
+ *   filtered by length at runtime. Answer pools for these lengths remain the
+ *   curated hardcoded lists in words.js.
+ *   https://github.com/jessicatysu/scrabble (TWL06.txt)
+ *
+ * All fetches fall back to the bundled lists in words.js on failure.
  */
 
-const ANSWERS_URL = 'https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/wordle-answers-alphabetical.txt';
-const VALID_URL   = 'https://raw.githubusercontent.com/tabatkins/wordle-list/main/words';
+const ANSWERS_URL  = 'https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/wordle-answers-alphabetical.txt';
+const VALID_5_URL  = 'https://raw.githubusercontent.com/tabatkins/wordle-list/main/words';
+const SCRABBLE_URL = 'https://raw.githubusercontent.com/jessicatysu/scrabble/master/TWL06.txt';
 
 /* ===== GAME STATE ===== */
 const WORD_LISTS = { 2: WORDS_2, 3: WORDS_3, 4: WORDS_4, 5: null };
-let validGuesses5  = null;  // full set for guess validation
-let answerPool5    = null;  // curated pool for random picks
+
+// Valid guess sets per length (Sets for O(1) lookup)
+const validGuesses = { 2: null, 3: null, 4: null, 5: null };
+let answerPool5 = null;  // curated pool for 5-letter random picks
 
 const MAX_GUESSES = 6;
 
@@ -36,30 +42,52 @@ function setLoading(on) {
 /* ===== FETCH WORD LISTS ===== */
 async function loadWordLists() {
   setLoading(true);
-  try {
-    const [answersRes, validRes] = await Promise.all([
-      fetch(ANSWERS_URL),
-      fetch(VALID_URL),
-    ]);
 
-    if (!answersRes.ok || !validRes.ok) throw new Error('Fetch failed');
+  // --- 5-letter lists (Wordle-specific sources) ---
+  try {
+    const [answersRes, valid5Res] = await Promise.all([
+      fetch(ANSWERS_URL),
+      fetch(VALID_5_URL),
+    ]);
+    if (!answersRes.ok || !valid5Res.ok) throw new Error('Fetch failed');
 
     const answersText = await answersRes.text();
-    const validText   = await validRes.text();
+    const valid5Text  = await valid5Res.text();
 
-    answerPool5   = answersText.trim().toLowerCase().split(/\s+/).filter(w => w.length === 5);
-    validGuesses5 = new Set(validText.trim().toLowerCase().split(/\s+/).filter(w => w.length === 5));
+    answerPool5 = answersText.trim().toLowerCase().split(/\s+/).filter(w => w.length === 5);
+    validGuesses[5] = new Set(valid5Text.trim().toLowerCase().split(/\s+/).filter(w => w.length === 5));
+    answerPool5.forEach(w => validGuesses[5].add(w));
 
-    // Make answers also valid guesses
-    answerPool5.forEach(w => validGuesses5.add(w));
-
-    console.log(`Loaded ${answerPool5.length} answer words and ${validGuesses5.size} valid guesses.`);
+    console.log(`5-letter: ${answerPool5.length} answers, ${validGuesses[5].size} valid guesses`);
   } catch (err) {
-    console.warn('Could not fetch word lists, using fallback.', err);
-    answerPool5   = WORDS_5_FALLBACK;
-    validGuesses5 = new Set(WORDS_5_FALLBACK);
+    console.warn('5-letter fetch failed, using fallback.', err);
+    answerPool5     = WORDS_5_FALLBACK;
+    validGuesses[5] = new Set(WORDS_5_FALLBACK);
   }
   WORD_LISTS[5] = answerPool5;
+
+  // --- 2/3/4-letter lists (TWL06 Scrabble dictionary) ---
+  try {
+    const scrabbleRes = await fetch(SCRABBLE_URL);
+    if (!scrabbleRes.ok) throw new Error('Scrabble fetch failed');
+
+    const text  = await scrabbleRes.text();
+    const words = text.trim().toLowerCase().split(/\s+/).filter(w => /^[a-z]+$/.test(w));
+
+    for (const len of [2, 3, 4]) {
+      const filtered = words.filter(w => w.length === len);
+      validGuesses[len] = new Set(filtered);
+      // Always include our curated answer pool words as valid too
+      WORD_LISTS[len].forEach(w => validGuesses[len].add(w));
+      console.log(`${len}-letter: ${WORD_LISTS[len].length} answers, ${validGuesses[len].size} valid guesses`);
+    }
+  } catch (err) {
+    console.warn('Scrabble fetch failed, falling back to answer lists for validation.', err);
+    for (const len of [2, 3, 4]) {
+      validGuesses[len] = new Set(WORD_LISTS[len]);
+    }
+  }
+
   setLoading(false);
 }
 
@@ -151,7 +179,9 @@ function deleteLetter() {
 
 /* ===== SUBMIT GUESS ===== */
 function isValidGuess(word) {
-  if (wordLength === 5) return validGuesses5 && validGuesses5.has(word);
+  const set = validGuesses[wordLength];
+  // If we have a loaded set, use it; otherwise fall back to answer list
+  if (set) return set.has(word);
   return WORD_LISTS[wordLength].includes(word);
 }
 
