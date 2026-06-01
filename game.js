@@ -16,7 +16,7 @@
 
 const ANSWERS_URL  = 'https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/wordle-answers-alphabetical.txt';
 const VALID_5_URL  = 'https://raw.githubusercontent.com/tabatkins/wordle-list/main/words';
-const SCRABBLE_URL = 'https://raw.githubusercontent.com/jessicatysu/scrabble/master/TWL06.txt';
+const SCRABBLE_URL = 'https://cdn.jsdelivr.net/gh/jessicatysu/scrabble@master/TWL06.txt';
 
 /* ===== GAME STATE ===== */
 const WORD_LISTS = { 2: WORDS_2, 3: WORDS_3, 4: WORDS_4, 5: null };
